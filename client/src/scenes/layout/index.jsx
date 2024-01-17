@@ -1,28 +1,32 @@
 import React, { useState } from "react";
 import { Box, useMediaQuery } from "@mui/material";
 import { Outlet } from "react-router-dom";
-import { UseSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import Navbar from "components/Navbar";
 import Sidebar from "components/Sidebar";
+import { useGetUserQuery } from "state/api";
+
 const Layout = () => {
-  {/**isNonMobile is true if it is a desktop */}
   const isNonMobile = useMediaQuery("(min-width: 600px)");
-  const[isSidebarOpen,setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const userId = useSelector((state) => state.global.userId);
+  const { data } = useGetUserQuery(userId);
 
   return (
-    <Box display = {isNonMobile ? "flex":"block"}width="100%" height="100%">
-     <Sidebar 
-        isNonMobile = {isNonMobile}
-        drawerWidth = "250px"
-        isSidebarOpen = {isSidebarOpen}
-        setIsSidebarOpen = {setIsSidebarOpen}
-     />
-      <Box>
-        <Navbar 
-          isSidebarOpen = {isSidebarOpen}
-          setIsSidebarOpen = {setIsSidebarOpen}
+    <Box display={isNonMobile ? "flex" : "block"} width="100%" height="100%">
+      <Sidebar
+        user={data || {}}
+        isNonMobile={isNonMobile}
+        drawerWidth="250px"
+        isSidebarOpen={isSidebarOpen}
+        setIsSidebarOpen={setIsSidebarOpen}
+      />
+      <Box flexGrow={1}>
+        <Navbar
+          user={data || {}}
+          isSidebarOpen={isSidebarOpen}
+          setIsSidebarOpen={setIsSidebarOpen}
         />
-        {/** This outlet basically represents the child that will be loaded,based on the page we are, say we are in the dashboard page,so we will load navbar and the outlet will load the dashboard */}
         <Outlet />
       </Box>
     </Box>
