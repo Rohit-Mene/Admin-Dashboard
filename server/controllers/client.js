@@ -2,6 +2,7 @@ import Product from "../models/Product.js";
 import ProductStat from "../models/ProductStat.js";
 import User from "../models/User.js";
 import Transaction from "../models/Transaction.js";
+import getCountryIso3 from "country-iso-2-to-3";
 //Find all the products requested, and for each product find the product stat for that product and return the product info and its stat(we use spread operator for that)
 export const getProducts = async (req, res) => {
   try {
@@ -51,7 +52,6 @@ export const getTransactions = async (req, res) => {
     const sortFormatted = Boolean(sort) ? generateSort() : {};
 
     const transactions = await Transaction.find({
-     
       $or: [
         { cost: { $regex: new RegExp(search, "i") } },
         { userId: { $regex: new RegExp(search, "i") } },
@@ -74,3 +74,27 @@ export const getTransactions = async (req, res) => {
   }
 };
 
+export const getGeography = async (req, res) => {
+  try {
+    const users = await User.find();
+
+    //We grab every user and convert the country name from 2letters to 3 letters,since the database has 2 letters and the nivo charts library accepts 3 letters country,and then we count the number of users of each country.
+    const mappedLocations = users.reduce((acc, { country }) => {
+      const countryISO3 = getCountryIso3(country);
+      if (!acc[countryISO3]) {
+        acc[countryISO3] = 0;
+      }
+      acc[countryISO3]++;
+      return acc;
+    }, {});
+    //this is the format that nivo char requires
+    const formattedLocation = Object.entries(mappedLocations).map(
+      ([country, count]) => {
+        return { id: country, value: count };
+      }
+    );
+    res.status(200).json(formattedLocation);
+  } catch (error) {
+    res.status(404).json({ message: error.message });
+  }
+};

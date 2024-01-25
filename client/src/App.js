@@ -9,6 +9,7 @@ import Layout from "scenes/layout";
 import Products from "scenes/products";
 import Customers from "scenes/customers";
 import Transactions from "scenes/transactions";
+import Geography from "scenes/geography";
 function App() {
   //Grabs the mode from the redux state and applys the theme using material UI
   const mode = useSelector((state) => state.global.mode);
@@ -28,6 +29,7 @@ function App() {
               <Route path="/products" element={<Products />} />
               <Route path="/customers" element={<Customers />} />
               <Route path="/transactions" element={<Transactions />} />
+              <Route path="/geography" element={<Geography />} />
             </Route>
           </Routes>
         </ThemeProvider>
