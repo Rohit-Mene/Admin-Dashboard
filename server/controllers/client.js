@@ -1,6 +1,7 @@
 import Product from "../models/Product.js";
 import ProductStat from "../models/ProductStat.js";
-import User from "../models/User.js"
+import User from "../models/User.js";
+import Transaction from "../models/Transaction.js";
 //Find all the products requested, and for each product find the product stat for that product and return the product info and its stat(we use spread operator for that)
 export const getProducts = async (req, res) => {
   try {
@@ -23,12 +24,53 @@ export const getProducts = async (req, res) => {
   }
 };
 
-export const getCustomers = async(req,res)=>{
+export const getCustomers = async (req, res) => {
   try {
     //The select makes sure we do not send the password in the API response(which is we dont send the password we have for each user stored in thed database)
-    const customers= await User.find({role:"user"}).select("-password");
-    res.status(200).json(customers)
+    const customers = await User.find({ role: "user" }).select("-password");
+    res.status(200).json(customers);
   } catch (error) {
     res.status(404).json({ message: error.message });
   }
-}
+};
+//Consists server size pagination logic
+export const getTransactions = async (req, res) => {
+  try {
+    //Sort comes in something like this in frontend{"field:userId,sort:"desc"}
+    const { page = 1, pageSize = 20, sort = null, search = "" } = req.query;
+
+    //formatted sort should look like {userId: - 1} for mongoDB
+    const generateSort = () => {
+      const sortParsed = JSON.parse(sort);
+      const sortFormatted = {
+        [sortParsed.field]: (sortParsed.sort = "asc" ? 1 : -1),
+      };
+      return sortFormatted;
+    };
+
+    const sortFormatted = Boolean(sort) ? generateSort() : {};
+
+    const transactions = await Transaction.find({
+     
+      $or: [
+        { cost: { $regex: new RegExp(search, "i") } },
+        { userId: { $regex: new RegExp(search, "i") } },
+      ],
+    })
+      .sort(sortFormatted)
+      .skip(page * pageSize)
+      .limit(pageSize);
+
+    const total = await Transaction.countDocuments({
+      name: { $regex: search, $options: "i" },
+    });
+
+    res.status(200).json({
+      transactions,
+      total,
+    });
+  } catch (error) {
+    res.status(404).json({ message: error.message });
+  }
+};
+
